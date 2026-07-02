@@ -1,0 +1,46 @@
+//============================================================
+// AutoAI Level Balancer (สำหรับ rAthena)
+// อัปเดตเลเวลตัวละคร AI ให้ใกล้เคียงผู้เล่นจริง (±10 Lv)
+// - auto_ai = 1  → ตัวละคร AI
+// - auto_ai = -1 → ผู้เล่นจริง
+// - ai_mode = 99 → AI Lv99 ถาวร
+//
+// ต้องรัน sql-files/upgrades/custom_auto_ai.sql ก่อนใช้งาน
+//============================================================
+
+-	script	AutoAI_LevelBalancer	-1,{
+
+OnClock0500:
+	callsub S_BalanceAI;
+	end;
+
+OnPCLogoutEvent:
+	query_sql("SELECT `auto_ai` FROM `char` WHERE `char_id` = " + getcharid(0), .@aa);
+	if (.@aa == -1)
+		callsub S_BalanceAI;
+	end;
+
+S_BalanceAI:
+	query_sql("SELECT ROUND(AVG(`base_level`)) FROM `char` WHERE `auto_ai` = -1", .@avg);
+
+	if (.@avg <= 0)
+		set .@avg, 30;
+
+	query_sql("UPDATE `char` SET `base_level` = 99, `job_level` = 70, `base_exp` = 0, `job_exp` = 0 WHERE `auto_ai` = 1 AND `ai_mode` = 99");
+
+	.@nb = query_sql("SELECT `char_id`, `base_level`, `job_level` FROM `char` WHERE `auto_ai` = 1 AND IFNULL(`ai_mode`, 0) != 99", .@cid, .@blv, .@jlv);
+
+	for (.@i = 0; .@i < .@nb; .@i++) {
+		.@spread = 10;
+		.@target = .@avg + (rand(.@spread * 2 + 1) - .@spread);
+		.@target = (.@target < 1) ? 1 : .@target;
+		.@target = (.@target > 150) ? 150 : .@target;
+
+		if (.@target != .@blv[.@i]) {
+			query_sql("UPDATE `char` SET `base_level` = " + .@target + ", `base_exp` = 0, `job_exp` = 0 WHERE `char_id` = " + .@cid[.@i]);
+		}
+	}
+
+	announce "[ระบบ] อัปเดตเลเวล AI Party สมดุลกับผู้เล่นแล้ว (Avg=" + .@avg + ")", bc_all|bc_blue;
+	return;
+}

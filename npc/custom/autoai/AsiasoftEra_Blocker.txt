@@ -1,0 +1,97 @@
+//============================================================
+// Asiasoft Final-Era Map Blocker (EP <= 10.x)
+// - อนุญาตถึง EP10.x (Einbroch, Lighthalzen/Bio Lab, Hugel/Odin, Thanatos)
+// - บล็อก EP11+ แผนที่ (รายชื่อด้านล่าง)
+// - ผู้เล่นที่เข้าแผนที่ต้องห้ามจะถูกส่งกลับ Morocc
+//============================================================
+
+-	script	AsiasoftEra_Blocker	-1,{
+
+OnInit:
+	.ReturnMap$ = "morocc";
+	.ReturnX = 156;
+	.ReturnY = 93;
+
+	.EnableNotice = 1;
+	.MinBypassGroup = 1000;
+
+	.Blocked$[0] = "ra_san01";
+	.Blocked$[1] = "ra_san02";
+	.Blocked$[2] = "ra_san03";
+	.Blocked$[3] = "ra_san04";
+	.Blocked$[4] = "ra_san05";
+	.Blocked$[5] = "rachel";
+	.Blocked$[6] = "ve_fild01";
+	.Blocked$[7] = "ve_fild02";
+	.Blocked$[8] = "ve_fild03";
+	.Blocked$[9] = "veins";
+	.Blocked$[10] = "thor_v01";
+	.Blocked$[11] = "thor_v02";
+	.Blocked$[12] = "thor_v03";
+	.Blocked$[13] = "nameless_i";
+	.Blocked$[14] = "abbey01";
+	.Blocked$[15] = "abbey02";
+	.Blocked$[16] = "abbey03";
+	.Blocked$[17] = "moscovia";
+	.Blocked$[18] = "mosk_dun01";
+	.Blocked$[19] = "mosk_dun02";
+	.Blocked$[20] = "mosk_dun03";
+	.Blocked$[21] = "brasilis";
+	.Blocked$[22] = "bra_dun01";
+	.Blocked$[23] = "bra_dun02";
+	.Blocked$[24] = "dewata";
+	.Blocked$[25] = "dew_dun01";
+	.Blocked$[26] = "dew_dun02";
+	.Blocked$[27] = "malaya";
+	.Blocked$[28] = "ma_fild01";
+	.Blocked$[29] = "ma_dun01";
+	.Blocked$[30] = "";
+	.Blocked$[31] = "splendide";
+	.Blocked$[32] = "manuk";
+	.Blocked$[33] = "man_fild01";
+	.Blocked$[34] = "man_fild02";
+	.Blocked$[35] = "man_fild03";
+	.Blocked$[36] = "spl_fild01";
+	.Blocked$[37] = "spl_fild02";
+	.Blocked$[38] = "dic_dun01";
+	.Blocked$[39] = "nyd_dun01";
+	.Blocked$[40] = "nyd_dun02";
+	.Blocked$[41] = "dicastes01";
+	.Blocked$[42] = "bif_fild01";
+	.Blocked$[43] = "bif_fild02";
+	.Blocked$[44] = "";
+	.Blocked$[45] = "mora";
+	.Blocked$[46] = "mag_dun03";
+
+	for (.@i = 0; .@i < getarraysize(.Blocked$); .@i++) {
+		if (.Blocked$[.@i] == "")
+			continue;
+		setmapflag .Blocked$[.@i], mf_loadevent;
+	}
+	end;
+
+OnPCLoadMapEvent:
+	if (getgroupid() >= .MinBypassGroup)
+		end;
+
+	.@m$ = strcharinfo(3);
+	if (callfunc("F_IsBlockedMap_ASIA", .@m$)) {
+		if (.EnableNotice)
+			announce "[ระบบ] ผู้เล่น " + strcharinfo(0) + " ถูกส่งกลับเพราะแผนที่ยังไม่เปิดตามช่วง Asiasoft (EP10.x): " + .@m$, bc_all|bc_yellow;
+		warp .ReturnMap$, .ReturnX, .ReturnY;
+	}
+	end;
+}
+
+function	script	F_IsBlockedMap_ASIA	{
+	.@map$ = getarg(0);
+
+	for (.@i = 0; .@i < getarraysize(getvariableofnpc(.Blocked$, "AsiasoftEra_Blocker")); .@i++) {
+		.@blk$ = getvariableofnpc(.Blocked$[.@i], "AsiasoftEra_Blocker");
+		if (.@blk$ == "")
+			continue;
+		if (.@map$ == .@blk$)
+			return 1;
+	}
+	return 0;
+}
